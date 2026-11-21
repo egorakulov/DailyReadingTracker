@@ -1,6 +1,9 @@
+import classes.DatabaseManager;
+
+
 public class Main {
     public static void main(String[] args) {
-
-        System.out.println("Hello world!");
+        DatabaseManager db = new DatabaseManager();
+        db.connect();
     }
 }

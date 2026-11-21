@@ -33,3 +33,5 @@ bin/
 ### Gradle ###
 .gradle/
 build/
+
+.env

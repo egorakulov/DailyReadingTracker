@@ -1,18 +1,31 @@
 plugins {
     id 'java'
+    id 'application'
 }
 
 group = 'io.github.egorakulov'
 version = '1.0'
+
+application {
+    mainClass = 'Main'
+}
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
+    // JUnit
     testImplementation platform('org.junit:junit-bom:5.11.4')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    //.env support
+    implementation 'io.github.cdimascio:dotenv-java:3.2.0'
+
+    // SqlLite JDBC Driver
+    implementation 'org.xerial:sqlite-jdbc:3.43.2.0'
+
 }
 
 test {
