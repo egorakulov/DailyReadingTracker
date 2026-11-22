@@ -101,7 +101,8 @@ public class DatabaseManager implements AutoCloseable {
      */
 
     public void insertToTable(int year, int month, int day,
-                String genre, String bookTitle, String author) throws SQLException{
+                String genre, String bookTitle, String author)
+    throws SQLException{
         String sql = "INSERT INTO daily_reading(year, month, " +
                 "date, genre, book_title, author) VALUES(?,?,?,?,?,?)";
         try (
@@ -117,7 +118,8 @@ public class DatabaseManager implements AutoCloseable {
         }
     }
     public void insertToTable(int year, int month, int day,
-                              String genre) throws SQLException {
+                              String genre)
+    throws SQLException {
         String sql = "INSERT INTO daily_reading(year, month, " +
                 "date, genre) VALUES(?,?,?,?)";
         try (
@@ -150,26 +152,28 @@ public class DatabaseManager implements AutoCloseable {
     client must then parse SqlToJavaStruct to get necessary info
      */
     public HashMap<Integer, SqlToJavaStruct> selectById(int id)
-                                throws SQLException {
+    throws SQLException {
         HashMap<Integer, SqlToJavaStruct> results = new HashMap<>();
-        String sql = "SELECT * FROM daily_reading" +  " WHERE id=" + id;
+        String sql = "SELECT * FROM daily_reading WHERE id=" + id;
         try (
             Statement stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery(sql);
             ) {
             // populate HashMap from rs
-            while(rs.next()) {
-                int id1 = rs.getInt("id");
-                int year = rs.getInt("year");
-                int month = rs.getInt("month");
-                int date = rs.getInt("date");
-                String genre = rs.getString("genre");
-                String bookTitle = rs.getString("book_title");
-                String author = rs.getString("author");
-                SqlToJavaStruct struct = new SqlToJavaStruct(year,
-                        month, date, genre, bookTitle, author);
-                results.put(id1, struct);
-            }
+            populateMapFromResultSet(results, rs);
+        }
+        return results;
+    }
+
+    public HashMap<Integer, SqlToJavaStruct> selectByYear(int year)
+    throws SQLException {
+        HashMap<Integer, SqlToJavaStruct> results = new HashMap<>();
+        String sql = "SELECT * FROM daily_reading WHERE year=" + year;
+        try (
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(sql);
+                ) {
+            populateMapFromResultSet(results, rs);
         }
         return results;
     }
@@ -185,4 +189,29 @@ public class DatabaseManager implements AutoCloseable {
     // parameters: year, month, date, genre, bookTitle, bookAuthor
 
     // have a separate java --> Sql and sql --> java class
+
+    /*
+    --- PRIVATE HELPER METHODS ---
+     */
+
+    /*
+    used in SELECT statements
+    creates result hashmap that is returned in a select statement
+    from the Result Set of sql query
+     */
+    private void populateMapFromResultSet(HashMap<Integer,
+            SqlToJavaStruct> map, ResultSet rs) throws  SQLException{
+        while(rs.next()) {
+            int id1 = rs.getInt("id");
+            int year = rs.getInt("year");
+            int month = rs.getInt("month");
+            int date = rs.getInt("date");
+            String genre = rs.getString("genre");
+            String bookTitle = rs.getString("book_title");
+            String author = rs.getString("author");
+            SqlToJavaStruct struct = new SqlToJavaStruct(year,
+                    month, date, genre, bookTitle, author);
+            map.put(id1, struct);
+        }
+    }
 }
