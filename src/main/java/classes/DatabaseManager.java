@@ -1,10 +1,10 @@
 package classes;
 
 import java.sql.*;
+import java.util.HashMap;
+
 import io.github.cdimascio.dotenv.Dotenv;
 import utils.SqlToJavaStruct;
-
-
 
 /*
 --- USAGE ---
@@ -17,8 +17,20 @@ try:
  - will call DatabaseManager.close() automatically
  */
 
+/*
+DATABASE ORGANIZATION
+tables:
+- daily_reading
+
+
+daily_reading:
+int id | int year | int month | int date | String genre | String book_title? | String author?
+ */
+
 public class DatabaseManager implements AutoCloseable {
+    // url to database. defined in .env
     private static String connectionURL;
+    // connection to database
     private Connection conn;
     public DatabaseManager() {
         // get connection String from .env file
@@ -26,7 +38,7 @@ public class DatabaseManager implements AutoCloseable {
         this.connectionURL = dotenv.get("SQL_CONNECTION_URL");
     }
 
-    // connect to database specified by connection string
+    /* connect to database specified by connection string */
     public void connect() throws SQLException {
         conn = DriverManager.getConnection(connectionURL);
         if (conn != null) {
@@ -74,16 +86,19 @@ public class DatabaseManager implements AutoCloseable {
     }
 
     /*
-    public void seeAllTables() {
-        String sql = "SELECT name FROM sql_master WHERE type=\'table\'";
-        try(
-            var stmt = conn.createStatement();
-        ) {
-            stmt.execute(sql);
-        }
-    }
-    */
+    --- INSERT STATEMENTS ---
+    inserts information into database
 
+    INSERT STATEMENTS FOR daily_reading:
+    REQUIRED
+    - int year
+    - int month
+    - int day
+    - String genre (of book)
+    OPTIONAL
+    - String bookTitle
+    - String author
+     */
 
     public void insertToTable(int year, int month, int day,
                 String genre, String bookTitle, String author) throws SQLException{
@@ -101,7 +116,6 @@ public class DatabaseManager implements AutoCloseable {
             pstmt.executeUpdate();
         }
     }
-
     public void insertToTable(int year, int month, int day,
                               String genre) throws SQLException {
         String sql = "INSERT INTO daily_reading(year, month, " +
@@ -117,8 +131,48 @@ public class DatabaseManager implements AutoCloseable {
         }
     }
 
-    // SELECT STATEMENTS
-    // select statements a hashmap of id --> SqlToJavaStruct
+    /*
+    --- SELECT STATEMENTS ---
+    Select information from database.
+
+    SELECT STATEMENTS FOR daily_reading
+    Possible Selection Criteria
+    - select by ID
+    - select by year
+    - select by month (year required)
+    - select by day (month, year required)
+
+    PARAMETERS
+    - necessary information for chosen select query
+
+    RETURNS:
+    - Hashmap of id (int) --> SqlToJavaStruct (defined in SqlToJavaStruct.java)
+    client must then parse SqlToJavaStruct to get necessary info
+     */
+    public HashMap<Integer, SqlToJavaStruct> selectById(int id)
+                                throws SQLException {
+        HashMap<Integer, SqlToJavaStruct> results = new HashMap<>();
+        String sql = "SELECT * FROM daily_reading" +  " WHERE id=" + id;
+        try (
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(sql);
+            ) {
+            // populate HashMap from rs
+            while(rs.next()) {
+                int id1 = rs.getInt("id");
+                int year = rs.getInt("year");
+                int month = rs.getInt("month");
+                int date = rs.getInt("date");
+                String genre = rs.getString("genre");
+                String bookTitle = rs.getString("book_title");
+                String author = rs.getString("author");
+                SqlToJavaStruct struct = new SqlToJavaStruct(year,
+                        month, date, genre, bookTitle, author);
+                results.put(id1, struct);
+            }
+        }
+        return results;
+    }
 
     // update table
     // parameters: year, month, date, genre
